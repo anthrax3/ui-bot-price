@@ -1,18 +1,44 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
+	"strconv"
 
-	"image"
-	_ "image/gif"
-	"image/jpeg"
-	_ "image/png"
+	//	"image"
+	//	_ "image/gif"
+	//	"image/jpeg"
+	//	_ "image/png"
 )
+
+// структура задания с информацией по товару
+type TaskerTovar struct {
+	Url string // ссылка на источник данных
+	Tovar
+	Tasker
+}
+
+//// структура книги
+type Tovar struct {
+	name          string // название товара
+	price         int    // цена для всех (обычная)
+	pricediscount int    // цена со скидкой которая видна
+}
+
+// задание-триггер для срабатывания оповещения
+type Tasker struct {
+	uslovie string // условие < , > , =
+	price   int    // цена триггера
+	result  bool   // результат срабатывания триггера, если true , то триггер сработал
+}
+
+var taskT TaskerTovar
 
 type page struct {
 	Title string
 	Msg   string
+	Msg2  string
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
@@ -22,15 +48,19 @@ func index(w http.ResponseWriter, r *http.Request) {
 
 	if title != "exec/" {
 		t, _ := template.ParseFiles("template.html")
-		t.Execute(w, &page{Title: "Convert Image"})
+		t.Execute(w, &page{Title: "Создание триггера"})
 	} else {
-		imgfile, fhead, _ := r.FormFile("imgfile")
+		shop := r.FormValue("shop")
+		taskT.Url = r.FormValue("surl")
+		taskT.uslovie = r.FormValue("uslovie")
+		taskT.Tasker.price, _ = strconv.Atoi(r.FormValue("schislo"))
+		fmt.Println(shop)
+		fmt.Println(taskT)
+		ss1 := "Введенное условие для магазина " + shop
+		ss := taskT.Url + "   " + taskT.uslovie + " " + r.FormValue("schislo")
+		t1, _ := template.ParseFiles("template-result.html")
+		t1.Execute(w, &page{Title: "Введенное условие для магазина " + shop, Msg: ss, Msg2: ss1})
 
-		img, ext, _ := image.Decode(imgfile)
-
-		w.Header().Set("Content-type", "image/jpeg")
-		w.Header().Set("Content-Disposition", "filename=\""+fhead.Filename+"."+ext+"\"")
-		jpeg.Encode(w, img, &jpeg.Options{0})
 	}
 }
 
