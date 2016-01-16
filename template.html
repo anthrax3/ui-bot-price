@@ -7,43 +7,50 @@
 	</head>
 	<body>
 		<p>{{.Msg}}</p>
+		
 	<form target="_blank" action="/exec/" enctype="multipart/form-data" method="post">
+	<table border="1">	
+		<tr>
+    		<td>
+				<b>Выберите название интернет магазина:</b><Br>
+   					<input type="radio" name="shop" value="labirint" autofocus checked> Лабиринт<Br>
+   					<input type="radio" name="shop" value="ulmart"> Юлмарт <Br>
+   					<input type="radio" name="shop" value="citilink"> Ситилинк <Br>
+					<input type="radio" name="shop" value="dns"> ДНС <Br>
+					<input type="radio" name="shop" value="mvideo"> МВидео <Br>
+					<input type="radio" name="shop" value="eldorado"> Эльдорадо <Br>  
+					<input type="radio" name="shop" value="aliexpress"> Алиэкспресс <Br>		
+  				
+			</td>
+			<td>
+				<b>URL: </b><Br>
+   					<input type="url" name="surl" value="http://labirint.ru">  <Br> 
+			</td>
+			<td>
+				<p><b>Выберите условие триггера:</b><Br>
+   					<input type="radio" name="uslovie" value="<" checked> < <Br>
+   					<input type="radio" name="uslovie" value="="> = <Br>
+   					<input type="radio" name="uslovie" value=">"> > <Br>
+  				</p>
+			</td>
+			
+			<td>
+				<b>Значение (цифра): </b><Br>
+   				<input type="text" name="schislo" value="0" pattern="^[ 0-9]+$">  <Br>   			
+  			</td>
+  		</tr>
 		
-		<p><b>Выберите название интернет магазина:</b><Br>
-   			<input type="radio" name="shop" value="labirint"> Лабиринт<Br>
-   			<input type="radio" name="shop" value="ulmart"> Юлмарт <Br>
-   			<input type="radio" name="shop" value="citilink"> Ситилинк <Br>
-			<input type="radio" name="shop" value="dns"> ДНС <Br>
-			<input type="radio" name="shop" value="mvideo"> МВидео <Br>
-			<input type="radio" name="shop" value="eldorado"> Эльдорадо <Br>  
-			<input type="radio" name="shop" value="aliexpress"> Алиэкспресс <Br>
-  		</p>
+		<tr>
+			<td colspan=4 align=center>
+				<b><input type="submit" name="button" value="Сохранить" />  <Br>   			
+  			</td>
+		</tr>		
+	</table>
 		
-		<p><b>URL: </b><Br>
-   			<input type="url" name="surl" value="http://">  <Br>   			
-  		</p>
-		
-		<p><b>Выберите условие триггера:</b><Br>
-   			<input type="radio" name="uslovie" value="<"> < <Br>
-   			<input type="radio" name="uslovie" value="="> = <Br>
-   			<input type="radio" name="uslovie" value=">"> > <Br>
-  		</p>
-		
-		<p><b>Значение (цифра): </b><Br>
-   			<input type="text" name="schislo" value="0" pattern="^[ 0-9]+$">  <Br>   			
-  		</p>
 		<br>
 		<p>
-		<input type="file" name="imgfile" />
-		<input type="submit" name="button" value="Execute" />
+		
 		</p>
-		
-		
-
-
-
-
-
 	</form>
 		
 	</body>

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	//	"fmt"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -48,14 +48,12 @@ func index(w http.ResponseWriter, r *http.Request) {
 
 	if title != "exec/" {
 		t, _ := template.ParseFiles("template.html")
-		t.Execute(w, &page{Title: "Создание триггера"})
+		t.Execute(w, &page{Title: "Создание триггера", Msg: "Задание триггера (условия) на срабатывание бота цен"})
 	} else {
 		shop := r.FormValue("shop")
 		taskT.Url = r.FormValue("surl")
 		taskT.uslovie = r.FormValue("uslovie")
 		taskT.Tasker.price, _ = strconv.Atoi(r.FormValue("schislo"))
-		fmt.Println(shop)
-		fmt.Println(taskT)
 		ss1 := "Введенное условие для магазина " + shop
 		ss := taskT.Url + "   " + taskT.uslovie + " " + r.FormValue("schislo")
 		t1, _ := template.ParseFiles("template-result.html")
