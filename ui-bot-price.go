@@ -46,7 +46,8 @@ type page struct {
 }
 
 func Savestrtofile(namef string, str string) int {
-	file, err := os.Create(namef)
+
+	file, err := os.OpenFile(namef, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		// handle the error here
 		return -1
@@ -57,7 +58,6 @@ func Savestrtofile(namef string, str string) int {
 	return 0
 }
 
-//http://www.labirint.ru/books/408438/;<;1534;
 //сохранение данных из Tasker товара в файл с именем namef
 func savetofilecfg(namef string, t TaskerTovar) {
 	str := t.Url + ";" + t.uslovie + ";" + strconv.Itoa(t.Tasker.price) + ";" + "\n"
