@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -12,6 +13,27 @@ import (
 	//	"image/jpeg"
 	//	_ "image/png"
 )
+
+////------------ Объявление типов и глобальных переменных
+
+var (
+	hd   string
+	user string
+)
+
+var (
+	taskT       TaskerTovar
+	tekuser     string // текущий пользователь который задает условия на срабатывания
+	pathcfg     string // адрес где находятся папки пользователей, если пустая строка, то текущая папка
+	pathcfguser string
+)
+
+type page struct {
+	Title  string
+	Msg    string
+	Msg2   string
+	TekUsr string
+}
 
 // структура задания с информацией по товару
 type TaskerTovar struct {
@@ -34,19 +56,7 @@ type Tasker struct {
 	result  bool   // результат срабатывания триггера, если true , то триггер сработал
 }
 
-var (
-	taskT       TaskerTovar
-	tekuser     string // текущий пользователь который задает условия на срабатывания
-	pathcfg     string // адрес где находятся папки пользователей, если пустая строка, то текущая папка
-	pathcfguser string
-)
-
-type page struct {
-	Title  string
-	Msg    string
-	Msg2   string
-	TekUsr string
-}
+//------------ END Объявление типов и глобальных переменных
 
 // сохранить файл
 func Savestrtofile(namef string, str string) int {
@@ -97,15 +107,28 @@ func index(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// функция парсинга аргументов программы
+func parse_args() bool {
+	flag.StringVar(&hd, "hd", "", "Рабочая папка где нах-ся папки пользователей для сохранения ")
+	flag.StringVar(&user, "user", "", "Рабочая папка где нах-ся папки пользователей для сохранения ")
+	flag.Parse()
+	pathcfg = hd
+	if user == "" {
+		tekuser = "testuser"
+	}
+	return true
+}
+
 func main() {
 
-	pathcfg = ""
-	tekuser = "testuser"
+	if !parse_args() {
+		return
+	}
 
 	if pathcfg == "" {
-		pathcfguser = tekuser //+ string(os.PathSeparator)
+		pathcfguser = tekuser
 	} else {
-		pathcfguser = pathcfg + string(os.PathSeparator) + tekuser //+ string(os.PathSeparator)
+		pathcfguser = pathcfg + string(os.PathSeparator) + tekuser
 	}
 
 	fmt.Println(pathcfguser)
