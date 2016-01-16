@@ -1,7 +1,7 @@
 package main
 
 import (
-	//	"fmt"
+	"fmt"
 	"html/template"
 	"net/http"
 	"os"
@@ -34,9 +34,12 @@ type Tasker struct {
 	result  bool   // результат срабатывания триггера, если true , то триггер сработал
 }
 
-var taskT TaskerTovar
-
-var tekuser string // текущий пользователь который задает условия на срабатывания
+var (
+	taskT       TaskerTovar
+	tekuser     string // текущий пользователь который задает условия на срабатывания
+	pathcfg     string // адрес где находятся папки пользователей, если пустая строка, то текущая папка
+	pathcfguser string
+)
 
 type page struct {
 	Title  string
@@ -45,6 +48,7 @@ type page struct {
 	TekUsr string
 }
 
+// сохранить файл
 func Savestrtofile(namef string, str string) int {
 
 	file, err := os.OpenFile(namef, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
@@ -78,7 +82,12 @@ func index(w http.ResponseWriter, r *http.Request) {
 		taskT.uslovie = r.FormValue("uslovie")
 		taskT.Tasker.price, _ = strconv.Atoi(r.FormValue("schislo"))
 
-		savetofilecfg(shop+"-url.cfg", taskT)
+		if _, err := os.Stat(pathcfguser); os.IsNotExist(err) {
+			os.Mkdir(pathcfguser, 0776)
+		}
+		fmt.Println(pathcfguser + string(os.PathSeparator) + shop + "-url.cfg")
+
+		savetofilecfg(pathcfguser+string(os.PathSeparator)+shop+"-url.cfg", taskT)
 
 		ss1 := "Введенное условие для магазина " + shop
 		ss := taskT.Url + "   " + taskT.uslovie + " " + r.FormValue("schislo")
@@ -89,7 +98,17 @@ func index(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+
+	pathcfg = ""
 	tekuser = "testuser"
+
+	if pathcfg == "" {
+		pathcfguser = tekuser //+ string(os.PathSeparator)
+	} else {
+		pathcfguser = pathcfg + string(os.PathSeparator) + tekuser //+ string(os.PathSeparator)
+	}
+
+	fmt.Println(pathcfguser)
 
 	http.HandleFunc("/", index)
 
