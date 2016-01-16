@@ -61,7 +61,7 @@ type Tasker struct {
 // сохранить файл
 func Savestrtofile(namef string, str string) int {
 
-	file, err := os.OpenFile(namef, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	file, err := os.OpenFile(namef, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0776)
 	if err != nil {
 		// handle the error here
 		return -1
@@ -115,6 +115,8 @@ func parse_args() bool {
 	pathcfg = hd
 	if user == "" {
 		tekuser = "testuser"
+	} else {
+		tekuser = user
 	}
 	return true
 }
