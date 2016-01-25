@@ -8,6 +8,9 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/go-martini/martini"
+	"github.com/martini-contrib/render"
+
 	//	"image"
 	//	_ "image/gif"
 	//	"image/jpeg"
@@ -78,14 +81,16 @@ func savetofilecfg(namef string, t TaskerTovar) {
 	Savestrtofile(namef, str)
 }
 
-func index(w http.ResponseWriter, r *http.Request) {
+func index(rr render.Render, w http.ResponseWriter, r *http.Request) {
+
 	w.Header().Set("Content-type", "text/html")
 
 	title := r.URL.Path[len("/"):]
 
 	if title != "exec/" {
-		t, _ := template.ParseFiles("template.html")
-		t.Execute(w, &page{Title: "Создание триггера", Msg: "Задание триггера (условия) на срабатывание бота цен", TekUsr: "Текущий пользователь: " + tekuser})
+		rr.HTML(200, "template", "")
+		//		t, _ := template.ParseFiles("template/template.html")
+		//		t.Execute(w, &page{Title: "Создание триггера", Msg: "Задание триггера (условия) на срабатывание бота цен", TekUsr: "Текущий пользователь: " + tekuser})
 	} else {
 		shop := r.FormValue("shop")
 		taskT.Url = r.FormValue("surl")
@@ -101,7 +106,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 
 		ss1 := "Введенное условие для магазина " + shop
 		ss := taskT.Url + "   " + taskT.uslovie + " " + r.FormValue("schislo")
-		t1, _ := template.ParseFiles("template-result.html")
+		t1, _ := template.ParseFiles("template/template-result.html")
 		t1.Execute(w, &page{Title: "Введенное условие для магазина " + shop, Msg: ss, Msg2: ss1})
 
 	}
@@ -122,6 +127,7 @@ func parse_args() bool {
 }
 
 func main() {
+	m := martini.Classic()
 
 	if !parse_args() {
 		return
@@ -135,7 +141,13 @@ func main() {
 
 	fmt.Println(pathcfguser)
 
-	http.HandleFunc("/", index)
+	m.Use(render.Renderer(render.Options{
+		Directory: "templates", // Specify what path to load the templates from.
+		//  Layout: "layout", // Specify a layout template. Layouts can call {{ yield }} to render the current template.
+		Extensions: []string{".tmpl", ".html"}}))
 
-	http.ListenAndServe(":7777", nil)
+	m.Get("/", index)
+	m.RunOnAddr(":7777")
+
+	//	http.ListenAndServe(":7777", nil)
 }
