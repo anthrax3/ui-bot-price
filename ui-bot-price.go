@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"html/template"
+	//	"html/template"
 	"net/http"
 	"os"
 	"strconv"
@@ -81,35 +81,28 @@ func savetofilecfg(namef string, t TaskerTovar) {
 	Savestrtofile(namef, str)
 }
 
-func index(rr render.Render, w http.ResponseWriter, r *http.Request) {
+func indexHandler(rr render.Render, w http.ResponseWriter, r *http.Request) {
+	rr.HTML(200, "template", &page{Title: "Создание триггера", Msg: "Задание триггера (условия) на срабатывание бота цен", TekUsr: "Текущий пользователь: " + tekuser})
+}
 
-	w.Header().Set("Content-type", "text/html")
+func execHandler(rr render.Render, w http.ResponseWriter, r *http.Request) {
+	shop := r.FormValue("shop")
+	taskT.Url = r.FormValue("surl")
+	taskT.uslovie = r.FormValue("uslovie")
+	taskT.Tasker.price, _ = strconv.Atoi(r.FormValue("schislo"))
 
-	title := r.URL.Path[len("/"):]
-
-	if title != "exec/" {
-		rr.HTML(200, "template", "")
-		//		t, _ := template.ParseFiles("template/template.html")
-		//		t.Execute(w, &page{Title: "Создание триггера", Msg: "Задание триггера (условия) на срабатывание бота цен", TekUsr: "Текущий пользователь: " + tekuser})
-	} else {
-		shop := r.FormValue("shop")
-		taskT.Url = r.FormValue("surl")
-		taskT.uslovie = r.FormValue("uslovie")
-		taskT.Tasker.price, _ = strconv.Atoi(r.FormValue("schislo"))
-
-		if _, err := os.Stat(pathcfguser); os.IsNotExist(err) {
-			os.Mkdir(pathcfguser, 0776)
-		}
-		fmt.Println(pathcfguser + string(os.PathSeparator) + shop + "-url.cfg")
-
-		savetofilecfg(pathcfguser+string(os.PathSeparator)+shop+"-url.cfg", taskT)
-
-		ss1 := "Введенное условие для магазина " + shop
-		ss := taskT.Url + "   " + taskT.uslovie + " " + r.FormValue("schislo")
-		t1, _ := template.ParseFiles("template/template-result.html")
-		t1.Execute(w, &page{Title: "Введенное условие для магазина " + shop, Msg: ss, Msg2: ss1})
-
+	if _, err := os.Stat(pathcfguser); os.IsNotExist(err) {
+		os.Mkdir(pathcfguser, 0776)
 	}
+	fmt.Println(pathcfguser + string(os.PathSeparator) + shop + "-url.cfg")
+
+	savetofilecfg(pathcfguser+string(os.PathSeparator)+shop+"-url.cfg", taskT)
+
+	ss1 := "Введенное условие для магазина " + shop
+	ss := taskT.Url + "   " + taskT.uslovie + " " + r.FormValue("schislo")
+	fmt.Println(ss1)
+	fmt.Println(ss)
+	rr.HTML(200, "template-result", &page{Title: "Введенное условие для магазина " + shop, Msg: ss, Msg2: ss1})
 }
 
 // функция парсинга аргументов программы
@@ -146,7 +139,8 @@ func main() {
 		//  Layout: "layout", // Specify a layout template. Layouts can call {{ yield }} to render the current template.
 		Extensions: []string{".tmpl", ".html"}}))
 
-	m.Get("/", index)
+	m.Get("/", indexHandler)
+	m.Post("/exec", execHandler)
 	m.RunOnAddr(":7777")
 
 	//	http.ListenAndServe(":7777", nil)
