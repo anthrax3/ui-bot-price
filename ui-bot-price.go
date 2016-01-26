@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/go-martini/martini"
+	"github.com/martini-contrib/auth"
 	"github.com/martini-contrib/render"
 
 	//	"image"
@@ -81,8 +82,8 @@ func savetofilecfg(namef string, t TaskerTovar) {
 	Savestrtofile(namef, str)
 }
 
-func indexHandler(rr render.Render, w http.ResponseWriter, r *http.Request) {
-	rr.HTML(200, "template", &page{Title: "Создание триггера", Msg: "Задание триггера (условия) на срабатывание бота цен", TekUsr: "Текущий пользователь: " + tekuser})
+func indexHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *http.Request) {
+	rr.HTML(200, "template", &page{Title: "Создание триггера", Msg: "Задание триггера (условия) на срабатывание бота цен", TekUsr: "Текущий пользователь: " + string(user)})
 }
 
 func execHandler(rr render.Render, w http.ResponseWriter, r *http.Request) {
@@ -103,6 +104,10 @@ func execHandler(rr render.Render, w http.ResponseWriter, r *http.Request) {
 	fmt.Println(ss1)
 	fmt.Println(ss)
 	rr.HTML(200, "template-result", &page{Title: "Введенное условие для магазина " + shop, Msg: ss, Msg2: ss1})
+}
+
+func authFunc(username, password string) bool {
+	return (auth.SecureCompare(username, "admin") && auth.SecureCompare(password, "1")) || (auth.SecureCompare(username, "mars") && auth.SecureCompare(password, "2"))
 }
 
 // функция парсинга аргументов программы
@@ -138,6 +143,12 @@ func main() {
 		Directory: "templates", // Specify what path to load the templates from.
 		//  Layout: "layout", // Specify a layout template. Layouts can call {{ yield }} to render the current template.
 		Extensions: []string{".tmpl", ".html"}}))
+
+	m.Use(auth.BasicFunc(authFunc))
+
+	//	m.Get("/", func(user auth.User) string {
+	//    return "Welcome, " + string(user)
+	//  })
 
 	m.Get("/", indexHandler)
 	m.Post("/exec", execHandler)
