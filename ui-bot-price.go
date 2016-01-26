@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	//	"fmt"
+	"fmt"
 	//	"html/template"
 	"net/http"
 	"os"
@@ -65,6 +65,7 @@ type TTasker struct {
 	Url     string
 	Uslovie string // условие < , > , =
 	Price   string // цена для всех (обычная)
+	Shop    string
 }
 
 //------------ END Объявление типов и глобальных переменных
@@ -118,6 +119,23 @@ func AddTaskHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *
 	rr.HTML(200, "addtask", &page{Title: "Создание триггера", Msg: "Задание триггера (условия) на срабатывание бота цен", TekUsr: "Текущий пользователь: " + string(user)})
 }
 
+func EditTaskHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *http.Request, params martini.Params) {
+	nstr, _ := strconv.Atoi(params["nstr"])
+	var tt TTasker
+	shop := params["shop"]
+	fmt.Println(shop)
+
+	s := readfiletxt(pathcfguser + string(user) + string(os.PathSeparator) + shop + "-url.cfg")
+	ss := strings.Split(s, "\n")
+
+	ts := strings.Split(ss[nstr], ";")
+	if len(ts) == 4 {
+		tt = TTasker{Url: ts[0], Uslovie: ts[1], Price: ts[2], Shop: shop}
+	}
+
+	rr.HTML(200, "edit", &tt) // &TTasker{Url: "edit", Uslovie: "edituslovie", Price: "11", Shop: shop})
+}
+
 // выбор магазина который будет выбран для вывода содержимого cfg файла
 func clickViewTaskHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *http.Request) {
 	//	tt := make([]TTasker, 0)
@@ -142,7 +160,7 @@ func ViewTaskHandler(user auth.User, rr render.Render, w http.ResponseWriter, r 
 	for _, v := range ss {
 		ts := strings.Split(v, ";")
 		if len(ts) == 4 {
-			tt = append(tt, TTasker{Url: ts[0], Uslovie: ts[1], Price: ts[2]})
+			tt = append(tt, TTasker{Url: ts[0], Uslovie: ts[1], Price: ts[2], Shop: shop})
 		}
 	}
 
@@ -216,6 +234,7 @@ func main() {
 
 	m.Get("/", indexHandler)
 	m.Get("/addtask", AddTaskHandler)
+	m.Get("/edit/:shop/:nstr", EditTaskHandler)
 	m.Post("/exec", ExecHandler)
 	m.Post("/view", ViewTaskHandler)
 	m.Get("/clickview", clickViewTaskHandler)
