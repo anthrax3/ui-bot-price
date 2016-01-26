@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>{{.Title}}</title>
+	</head>
+	<body>
+		<p>{{.Msg}}</p>
+		
+		<p>{{.TekUsr}}</p>
+		
+	<form target="_blank" action="/exec" enctype="multipart/form-data" method="post">
+	<table border="1">	
+		<tr>
+    		<td>
+				<b>Выберите название интернет магазина:</b><Br>
+   			
+					<select name="shop">
+						<option value="labirint">Лабиринт</option>
+						<option value="ulmart">Юлмарт  </option>
+						<option value="citilink"> Ситилинк </option>
+						<option value="dns"> ДНС </option>
+						<option value="mvideo">МВидео  </option>
+						<option value="eldorado"> Эльдорадо </option>
+						<option value="aliexpress">Алиэкспресс  </option>					
+					
+					</select>
+
+			</td>
+			<td>
+				<b>URL: </b><Br>
+   					<input type="url" name="surl" value="http://labirint.ru">  <Br> 
+			</td>
+			<td>
+				<p><b>Выберите условие триггера:</b><Br>
+   					<input type="radio" name="uslovie" value="<" checked> < <Br>
+   					<input type="radio" name="uslovie" value="="> = <Br>
+   					<input type="radio" name="uslovie" value=">"> > <Br>
+  				</p>
+			</td>
+			
+			<td>
+				<b>Значение (цифра): </b><Br>
+   				<input type="text" name="schislo" value="0" pattern="^[ 0-9]+$">  <Br>   			
+  			</td>
+  		</tr>
+		
+		<tr>
+			<td colspan=4 align=center>
+				<b><input type="submit" name="button" value="Сохранить" />  <Br>   			
+  			</td>
+		</tr>		
+	</table>
+		
+		<br>
+		<p>
+		
+		</p>
+	</form>
+		
+	</body>
+</html>

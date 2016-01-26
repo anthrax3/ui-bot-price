@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Просмотр</title>
+	</head>
+	<body>
+		<p>Просмотр запланированных задач:</p>
+		
+		{{range $key,$value:=.}}
+		<table>
+		<p>
+			<tr>
+				<td> <a href="{{$value.Url}}">{{$value.Url}}</a> <td>
+				<td> {{$value.Uslovie}} <td>
+				<td> {{$value.Price}} <td>		
+			<tr>
+		</p>
+		<table>
+		{{end}}
+		
+		
+			
+	</body>
+</html>

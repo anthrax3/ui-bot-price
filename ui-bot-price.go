@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/auth"
@@ -60,6 +61,12 @@ type Tasker struct {
 	result  bool   // результат срабатывания триггера, если true , то триггер сработал
 }
 
+type TTasker struct {
+	Url     string
+	Uslovie string // условие < , > , =
+	Price   string // цена для всех (обычная)
+}
+
 //------------ END Объявление типов и глобальных переменных
 
 // сохранить файл
@@ -82,32 +89,71 @@ func savetofilecfg(namef string, t TaskerTovar) {
 	Savestrtofile(namef, str)
 }
 
-func indexHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *http.Request) {
-	rr.HTML(200, "template", &page{Title: "Создание триггера", Msg: "Задание триггера (условия) на срабатывание бота цен", TekUsr: "Текущий пользователь: " + string(user)})
+//// чтение файла с именем namefи возвращение содержимое файла, иначе текст ошибки
+func readfiletxt(namef string) string {
+	file, err := os.Open(namef)
+	if err != nil {
+		return "handle the error here"
+	}
+	defer file.Close()
+	// get the file size
+	stat, err := file.Stat()
+	if err != nil {
+		return "error here"
+	}
+	// read the file
+	bs := make([]byte, stat.Size())
+	_, err = file.Read(bs)
+	if err != nil {
+		return "error here"
+	}
+	return string(bs)
 }
 
-func execHandler(rr render.Render, w http.ResponseWriter, r *http.Request) {
+func indexHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *http.Request) {
+	rr.HTML(200, "index", &page{Title: "Йоу Начало", Msg: "Начальная страница", TekUsr: "Текущий пользователь: " + string(user)})
+}
+
+func AddTaskHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *http.Request) {
+	rr.HTML(200, "addtask", &page{Title: "Создание триггера", Msg: "Задание триггера (условия) на срабатывание бота цен", TekUsr: "Текущий пользователь: " + string(user)})
+}
+
+// просмотр
+func ViewTaskHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *http.Request) {
+	tt := make([]TTasker, 0)
+	s := readfiletxt(pathcfguser + string(user) + string(os.PathSeparator) + "labirint-url.cfg")
+	ss := strings.Split(s, "\n")
+	for _, v := range ss {
+		ts := strings.Split(v, ";")
+		if len(ts) == 4 {
+			tt = append(tt, TTasker{Url: ts[0], Uslovie: ts[1], Price: ts[2]})
+		}
+	}
+
+	rr.HTML(200, "view", &tt)
+}
+
+func ExecHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *http.Request) {
 	shop := r.FormValue("shop")
 	taskT.Url = r.FormValue("surl")
 	taskT.uslovie = r.FormValue("uslovie")
 	taskT.Tasker.price, _ = strconv.Atoi(r.FormValue("schislo"))
 
-	if _, err := os.Stat(pathcfguser); os.IsNotExist(err) {
-		os.Mkdir(pathcfguser, 0776)
+	if _, err := os.Stat(pathcfguser + string(user)); os.IsNotExist(err) {
+		os.Mkdir(pathcfguser+string(user), 0776)
 	}
-	fmt.Println(pathcfguser + string(os.PathSeparator) + shop + "-url.cfg")
 
-	savetofilecfg(pathcfguser+string(os.PathSeparator)+shop+"-url.cfg", taskT)
+	savetofilecfg(pathcfguser+string(user)+string(os.PathSeparator)+shop+"-url.cfg", taskT)
 
 	ss1 := "Введенное условие для магазина " + shop
 	ss := taskT.Url + "   " + taskT.uslovie + " " + r.FormValue("schislo")
-	fmt.Println(ss1)
-	fmt.Println(ss)
+	//	fmt.Println(ss1)
+	//	fmt.Println(ss)
 	rr.HTML(200, "template-result", &page{Title: "Введенное условие для магазина " + shop, Msg: ss, Msg2: ss1})
 }
 
 func authFunc(username, password string) bool {
-	return (auth.SecureCompare(username, "admin") && auth.SecureCompare(password, "1")) || (auth.SecureCompare(username, "mars") && auth.SecureCompare(password, "2"))
+	return (auth.SecureCompare(username, "admin") && auth.SecureCompare(password, "1")) || (auth.SecureCompare(username, "mars") && auth.SecureCompare(password, "2")) || (auth.SecureCompare(username, "oilnur") && auth.SecureCompare(password, "oilnur"))
 }
 
 // функция парсинга аргументов программы
@@ -132,27 +178,31 @@ func main() {
 	}
 
 	if pathcfg == "" {
-		pathcfguser = tekuser
+		pathcfguser = ""
 	} else {
-		pathcfguser = pathcfg + string(os.PathSeparator) + tekuser
+		pathcfguser = pathcfg + string(os.PathSeparator)
 	}
 
-	fmt.Println(pathcfguser)
+	//	if pathcfg == "" {
+	//		pathcfguser = tekuser
+	//	} else {
+	//		pathcfguser = pathcfg + string(os.PathSeparator) + tekuser
+	//	}
+
+	//	fmt.Println(pathcfguser)
 
 	m.Use(render.Renderer(render.Options{
-		Directory: "templates", // Specify what path to load the templates from.
-		//  Layout: "layout", // Specify a layout template. Layouts can call {{ yield }} to render the current template.
+		Directory:  "templates", // Specify what path to load the templates from.
+		Layout:     "layout",    // Specify a layout template. Layouts can call {{ yield }} to render the current template.
 		Extensions: []string{".tmpl", ".html"}}))
 
 	m.Use(auth.BasicFunc(authFunc))
 
-	//	m.Get("/", func(user auth.User) string {
-	//    return "Welcome, " + string(user)
-	//  })
-
 	m.Get("/", indexHandler)
-	m.Post("/exec", execHandler)
+	m.Get("/addtask", AddTaskHandler)
+	m.Post("/exec", ExecHandler)
+	m.Get("/view", ViewTaskHandler)
+	m.Get("/", indexHandler)
 	m.RunOnAddr(":7777")
 
-	//	http.ListenAndServe(":7777", nil)
 }
