@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	//	"fmt"
 	//	"html/template"
 	"net/http"
 	"os"
@@ -118,10 +118,26 @@ func AddTaskHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *
 	rr.HTML(200, "addtask", &page{Title: "Создание триггера", Msg: "Задание триггера (условия) на срабатывание бота цен", TekUsr: "Текущий пользователь: " + string(user)})
 }
 
+// выбор магазина который будет выбран для вывода содержимого cfg файла
+func clickViewTaskHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *http.Request) {
+	//	tt := make([]TTasker, 0)
+	//	s := readfiletxt(pathcfguser + string(user) + string(os.PathSeparator) + "labirint-url.cfg")
+	//	ss := strings.Split(s, "\n")
+	//	for _, v := range ss {
+	//		ts := strings.Split(v, ";")
+	//		if len(ts) == 4 {
+	//			tt = append(tt, TTasker{Url: ts[0], Uslovie: ts[1], Price: ts[2]})
+	//		}
+	//	}
+
+	rr.HTML(200, "clickview", &page{TekUsr: string(user)})
+}
+
 // просмотр
 func ViewTaskHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *http.Request) {
+	shop := r.FormValue("shop")
 	tt := make([]TTasker, 0)
-	s := readfiletxt(pathcfguser + string(user) + string(os.PathSeparator) + "labirint-url.cfg")
+	s := readfiletxt(pathcfguser + string(user) + string(os.PathSeparator) + shop + "-url.cfg")
 	ss := strings.Split(s, "\n")
 	for _, v := range ss {
 		ts := strings.Split(v, ";")
@@ -201,7 +217,8 @@ func main() {
 	m.Get("/", indexHandler)
 	m.Get("/addtask", AddTaskHandler)
 	m.Post("/exec", ExecHandler)
-	m.Get("/view", ViewTaskHandler)
+	m.Post("/view", ViewTaskHandler)
+	m.Get("/clickview", clickViewTaskHandler)
 	m.Get("/", indexHandler)
 	m.RunOnAddr(":7777")
 

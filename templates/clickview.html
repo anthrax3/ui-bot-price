@@ -3,14 +3,13 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		<title>{{.Title}}</title>
+		<title>Выбор магазина для вывода списка условий</title>
 	</head>
 	<body>
-		<p>{{.Msg}}</p>
 		
 		<p>{{.TekUsr}}</p>
 		
-	<form target="_blank" action="/exec" enctype="multipart/form-data" method="post">
+	<form target="_blank" action="/view" enctype="multipart/form-data" method="post">
 	<table border="1">	
 		<tr>
     		<td>
@@ -28,27 +27,10 @@
 					</select>
 
 			</td>
-			<td>
-				<b>URL: </b><Br>
-   					<input type="url" name="surl" value="http://labirint.ru">  <Br> 
-			</td>
-			<td>
-				<p><b>Выберите условие триггера:</b><Br>
-   					<input type="radio" name="uslovie" value="<" checked> < <Br>
-   					<input type="radio" name="uslovie" value="="> = <Br>
-   					<input type="radio" name="uslovie" value=">"> > <Br>
-  				</p>
-			</td>
-			
-			<td>
-				<b>Значение (цифра): </b><Br>
-   				<input type="text" name="schislo" value="0" pattern="^[ 0-9]+$">  <Br>   			
-  			</td>
-  		</tr>
-		
+		</tr>
 		<tr>
 			<td colspan=4 align=center>
-				<b><input type="submit" name="button" value="Сохранить" />  <Br>   			
+				<b><input type="submit" name="button" value="Вывести содержимое" />  <Br>   			
   			</td>
 		</tr>		
 	</table>
