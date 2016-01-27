@@ -27,7 +27,7 @@ var (
 )
 
 var (
-	taskT       TaskerTovar
+	//	taskT       TaskerTovar
 	tekuser     string // текущий пользователь который задает условия на срабатывания
 	pathcfg     string // адрес где находятся папки пользователей, если пустая строка, то текущая папка
 	pathcfguser string
@@ -38,35 +38,15 @@ type page struct {
 	Msg    string
 	Msg2   string
 	TekUsr string
-}
-
-// структура задания с информацией по товару
-type TaskerTovar struct {
-	Url string // ссылка на источник данных
-	Tovar
-	Tasker
-}
-
-//// структура книги
-type Tovar struct {
-	name          string // название товара
-	price         int    // цена для всех (обычная)
-	pricediscount int    // цена со скидкой которая видна
-}
-
-// задание-триггер для срабатывания оповещения
-type Tasker struct {
-	uslovie string // условие < , > , =
-	price   int    // цена триггера
-	result  bool   // результат срабатывания триггера, если true , то триггер сработал
+	Shops  map[string]string
 }
 
 type TTasker struct {
-	Url     string
+	Url     string // урл товара в магазине
 	Uslovie string // условие < , > , =
 	Price   string // цена для всех (обычная)
-	Shop    string
-	Nstr    string
+	Shop    string // название магазина
+	Nstr    string // номер строки который редактируется или удаляется, если -1 то новое условие
 }
 
 //------------ END Объявление типов и глобальных переменных
@@ -97,9 +77,9 @@ func Savestrtofile(namef string, str string) int {
 	return 0
 }
 
-//сохранение данных из Tasker товара в файл с именем namef
-func savetofilecfg(namef string, t TaskerTovar) {
-	str := t.Url + ";" + t.uslovie + ";" + strconv.Itoa(t.Tasker.price) + ";" + "\n"
+//сохранение данных из TTasker товара в файл с именем namef
+func savetofilecfg(namef string, t TTasker) {
+	str := t.Url + ";" + t.Uslovie + ";" + t.Price + ";" + "\n"
 	Savestrtofile(namef, str)
 }
 
@@ -129,7 +109,17 @@ func indexHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *ht
 }
 
 func AddTaskHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *http.Request) {
-	rr.HTML(200, "addtask", &page{Title: "Создание триггера", Msg: "Задание триггера (условия) на срабатывание бота цен", TekUsr: "Текущий пользователь: " + string(user)})
+	pp := page{Title: "Создание триггера", Msg: "Задание триггера (условия) на срабатывание бота цен", TekUsr: "Текущий пользователь: " + string(user)}
+	pp.Shops = map[string]string{
+		"labirint":   "Лабиринт",
+		"ulmart":     "Юлмарт",
+		"citilink":   "Ситилинк",
+		"dns":        "ДНС",
+		"mvideo":     "МВидео",
+		"eldorado":   "Эльдорадо",
+		"aliexpress": "Алиэкспресс",
+	}
+	rr.HTML(200, "addtask", &pp)
 }
 
 // обработка редактирования задания
@@ -176,10 +166,20 @@ func DelTaskHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *
 
 // выбор магазина который будет выбран для вывода содержимого cfg файла
 func clickViewTaskHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *http.Request) {
-	rr.HTML(200, "clickview", &page{TekUsr: string(user)})
+	pp := page{TekUsr: string(user)}
+	pp.Shops = map[string]string{
+		"labirint":   "Лабиринт",
+		"ulmart":     "Юлмарт",
+		"citilink":   "Ситилинк",
+		"dns":        "ДНС",
+		"mvideo":     "МВидео",
+		"eldorado":   "Эльдорадо",
+		"aliexpress": "Алиэкспресс",
+	}
+	rr.HTML(200, "clickview", &pp)
 }
 
-// просмотр
+// просмотр заданий выбранного магазина
 func ViewTaskHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *http.Request) {
 	shop := r.FormValue("shop")
 	tt := make([]TTasker, 0)
@@ -191,17 +191,19 @@ func ViewTaskHandler(user auth.User, rr render.Render, w http.ResponseWriter, r 
 			tt = append(tt, TTasker{Url: ts[0], Uslovie: ts[1], Price: ts[2], Shop: shop})
 		}
 	}
-
 	rr.HTML(200, "view", &tt)
 }
 
 func ExecHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *http.Request, params martini.Params) {
+	var tt TTasker
 	nstr, _ := strconv.Atoi(params["nstr"])
 	//	shop := params["shop"]
 	shop := r.FormValue("shop")
-	taskT.Url = r.FormValue("surl")
-	taskT.uslovie = r.FormValue("uslovie")
-	taskT.Tasker.price, _ = strconv.Atoi(r.FormValue("schislo"))
+
+	tt.Shop = r.FormValue("shop")
+	tt.Url = r.FormValue("surl")
+	tt.Uslovie = r.FormValue("uslovie")
+	tt.Price = r.FormValue("schislo")
 
 	if _, err := os.Stat(pathcfguser + string(user)); os.IsNotExist(err) {
 		os.Mkdir(pathcfguser+string(user), 0776)
@@ -209,12 +211,12 @@ func ExecHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *htt
 	namef := pathcfguser + string(user) + string(os.PathSeparator) + shop + "-url.cfg"
 
 	if nstr == -1 {
-		savetofilecfg(namef, taskT)
+		savetofilecfg(namef, tt)
 	} else {
 		s := readfiletxt(namef)
 		ss := strings.Split(s, "\n")
 		if nstr <= (len(ss) - 1) {
-			ss[nstr] = taskT.Url + ";" + taskT.uslovie + ";" + strconv.Itoa(taskT.Tasker.price) + ";"
+			ss[nstr] = tt.Url + ";" + tt.Uslovie + ";" + tt.Price + ";"
 		}
 		str := ""
 		for _, v := range ss {
@@ -223,16 +225,15 @@ func ExecHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *htt
 			}
 		}
 		SaveNewstrtofile(namef, str)
-
 	}
 
 	ss1 := "Введенное условие для магазина " + shop
-	ss := taskT.Url + "   " + taskT.uslovie + " " + r.FormValue("schislo")
+	ss := tt.Url + "   " + tt.Uslovie + " " + tt.Price
 	rr.HTML(200, "exec", &page{Title: "Введенное условие для магазина " + shop, Msg: ss, Msg2: ss1})
 }
 
 func authFunc(username, password string) bool {
-	return (auth.SecureCompare(username, "admin") && auth.SecureCompare(password, "1")) || (auth.SecureCompare(username, "mars") && auth.SecureCompare(password, "2")) || (auth.SecureCompare(username, "oilnur") && auth.SecureCompare(password, "oilnur"))
+	return (auth.SecureCompare(username, "admin") && auth.SecureCompare(password, "!!!!VVjhsdsajdbabjd1")) || (auth.SecureCompare(username, "mars") && auth.SecureCompare(password, "Verbat1mert")) || (auth.SecureCompare(username, "oilnur") && auth.SecureCompare(password, "Verbat1mqwe"))
 }
 
 // функция парсинга аргументов программы

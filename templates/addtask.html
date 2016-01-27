@@ -17,13 +17,9 @@
 				<b>Выберите название интернет магазина:</b><Br>
    			
 					<select name="shop">
-						<option value="labirint">Лабиринт</option>
-						<option value="ulmart">Юлмарт  </option>
-						<option value="citilink"> Ситилинк </option>
-						<option value="dns"> ДНС </option>
-						<option value="mvideo">МВидео  </option>
-						<option value="eldorado"> Эльдорадо </option>
-						<option value="aliexpress">Алиэкспресс  </option>					
+					{{range $key,$value:=.Shops}}
+						<option value="{{$key}}">{{$value}}</option>						
+					{{end}}					
 					
 					</select>
 
