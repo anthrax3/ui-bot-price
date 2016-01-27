@@ -66,13 +66,26 @@ type TTasker struct {
 	Uslovie string // условие < , > , =
 	Price   string // цена для всех (обычная)
 	Shop    string
+	Nstr    string
 }
 
 //------------ END Объявление типов и глобальных переменных
 
+// сохранить в новый файл
+func SaveNewstrtofile(namef string, str string) int {
+	file, err := os.Create(namef)
+	if err != nil {
+		// handle the error here
+		return -1
+	}
+	defer file.Close()
+
+	file.WriteString(str)
+	return 0
+}
+
 // сохранить файл
 func Savestrtofile(namef string, str string) int {
-
 	file, err := os.OpenFile(namef, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0776)
 	if err != nil {
 		// handle the error here
@@ -119,35 +132,50 @@ func AddTaskHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *
 	rr.HTML(200, "addtask", &page{Title: "Создание триггера", Msg: "Задание триггера (условия) на срабатывание бота цен", TekUsr: "Текущий пользователь: " + string(user)})
 }
 
+// обработка редактирования задания
 func EditTaskHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *http.Request, params martini.Params) {
 	nstr, _ := strconv.Atoi(params["nstr"])
 	var tt TTasker
 	shop := params["shop"]
 	fmt.Println(shop)
 
-	s := readfiletxt(pathcfguser + string(user) + string(os.PathSeparator) + shop + "-url.cfg")
+	namef := pathcfguser + string(user) + string(os.PathSeparator) + shop + "-url.cfg"
+
+	s := readfiletxt(namef)
 	ss := strings.Split(s, "\n")
 
 	ts := strings.Split(ss[nstr], ";")
 	if len(ts) == 4 {
-		tt = TTasker{Url: ts[0], Uslovie: ts[1], Price: ts[2], Shop: shop}
+		tt = TTasker{Url: ts[0], Uslovie: ts[1], Price: ts[2], Shop: shop, Nstr: params["nstr"]}
 	}
 
-	rr.HTML(200, "edit", &tt) // &TTasker{Url: "edit", Uslovie: "edituslovie", Price: "11", Shop: shop})
+	rr.HTML(200, "edit", &tt)
+}
+
+// обработка удаления задания
+func DelTaskHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *http.Request, params martini.Params) {
+	nstr, _ := strconv.Atoi(params["nstr"])
+	//	var tt TTasker
+	shop := params["shop"]
+	//	fmt.Println(shop)
+	namef := pathcfguser + string(user) + string(os.PathSeparator) + shop + "-url.cfg"
+	s := readfiletxt(namef)
+	ss := strings.Split(s, "\n")
+	//	if (nstr >= 0) && (nstr < len(ss)) {
+	str := ""
+	for i, v := range ss {
+		if i != nstr {
+			str += v + "\n"
+		}
+	}
+	fmt.Println("str= ", str)
+	SaveNewstrtofile(namef, str)
+	//	}
+	rr.Redirect("/")
 }
 
 // выбор магазина который будет выбран для вывода содержимого cfg файла
 func clickViewTaskHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *http.Request) {
-	//	tt := make([]TTasker, 0)
-	//	s := readfiletxt(pathcfguser + string(user) + string(os.PathSeparator) + "labirint-url.cfg")
-	//	ss := strings.Split(s, "\n")
-	//	for _, v := range ss {
-	//		ts := strings.Split(v, ";")
-	//		if len(ts) == 4 {
-	//			tt = append(tt, TTasker{Url: ts[0], Uslovie: ts[1], Price: ts[2]})
-	//		}
-	//	}
-
 	rr.HTML(200, "clickview", &page{TekUsr: string(user)})
 }
 
@@ -167,7 +195,9 @@ func ViewTaskHandler(user auth.User, rr render.Render, w http.ResponseWriter, r 
 	rr.HTML(200, "view", &tt)
 }
 
-func ExecHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *http.Request) {
+func ExecHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *http.Request, params martini.Params) {
+	nstr, _ := strconv.Atoi(params["nstr"])
+	//	shop := params["shop"]
 	shop := r.FormValue("shop")
 	taskT.Url = r.FormValue("surl")
 	taskT.uslovie = r.FormValue("uslovie")
@@ -176,14 +206,29 @@ func ExecHandler(user auth.User, rr render.Render, w http.ResponseWriter, r *htt
 	if _, err := os.Stat(pathcfguser + string(user)); os.IsNotExist(err) {
 		os.Mkdir(pathcfguser+string(user), 0776)
 	}
+	namef := pathcfguser + string(user) + string(os.PathSeparator) + shop + "-url.cfg"
 
-	savetofilecfg(pathcfguser+string(user)+string(os.PathSeparator)+shop+"-url.cfg", taskT)
+	if nstr == -1 {
+		savetofilecfg(namef, taskT)
+	} else {
+		s := readfiletxt(namef)
+		ss := strings.Split(s, "\n")
+		if nstr <= (len(ss) - 1) {
+			ss[nstr] = taskT.Url + ";" + taskT.uslovie + ";" + strconv.Itoa(taskT.Tasker.price) + ";"
+		}
+		str := ""
+		for _, v := range ss {
+			if v != "" {
+				str += v + "\n"
+			}
+		}
+		SaveNewstrtofile(namef, str)
+
+	}
 
 	ss1 := "Введенное условие для магазина " + shop
 	ss := taskT.Url + "   " + taskT.uslovie + " " + r.FormValue("schislo")
-	//	fmt.Println(ss1)
-	//	fmt.Println(ss)
-	rr.HTML(200, "template-result", &page{Title: "Введенное условие для магазина " + shop, Msg: ss, Msg2: ss1})
+	rr.HTML(200, "exec", &page{Title: "Введенное условие для магазина " + shop, Msg: ss, Msg2: ss1})
 }
 
 func authFunc(username, password string) bool {
@@ -217,14 +262,6 @@ func main() {
 		pathcfguser = pathcfg + string(os.PathSeparator)
 	}
 
-	//	if pathcfg == "" {
-	//		pathcfguser = tekuser
-	//	} else {
-	//		pathcfguser = pathcfg + string(os.PathSeparator) + tekuser
-	//	}
-
-	//	fmt.Println(pathcfguser)
-
 	m.Use(render.Renderer(render.Options{
 		Directory:  "templates", // Specify what path to load the templates from.
 		Layout:     "layout",    // Specify a layout template. Layouts can call {{ yield }} to render the current template.
@@ -235,7 +272,8 @@ func main() {
 	m.Get("/", indexHandler)
 	m.Get("/addtask", AddTaskHandler)
 	m.Get("/edit/:shop/:nstr", EditTaskHandler)
-	m.Post("/exec", ExecHandler)
+	m.Get("/del/:shop/:nstr", DelTaskHandler)
+	m.Post("/exec/:shop/:nstr", ExecHandler)
 	m.Post("/view", ViewTaskHandler)
 	m.Get("/clickview", clickViewTaskHandler)
 	m.Get("/", indexHandler)
