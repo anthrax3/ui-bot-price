@@ -23,10 +23,15 @@
 			</td>
 			<td>
 				<p><b>Выберите условие триггера:</b><Br>
-   					<input type="radio" name="uslovie" value="<" checked> < <Br>
-   					<input type="radio" name="uslovie" value="="> = <Br>
-   					<input type="radio" name="uslovie" value=">"> > <Br>
-  				</p>
+					<select name="uslovie">
+						<option value="{{.Uslovie}}">{{.Uslovie}}</option>	
+						<option value="<"><</option>
+						<option value="=">=</option>
+						<option value=">">></option>
+					</select>
+				
+				
+   			  				</p>
 			</td>
 			
 			<td>
